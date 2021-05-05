@@ -42,6 +42,17 @@ app.get('/add', (req, res) => {
     res.render('add')
 })
 
+app.get('/photos/:id', async (req, res) => {
+    let id = req.params.id
+    let selectPhoto = await Photo.findById(id, (err, data) => {
+        if (err) throw err
+        return data
+    })
+    res.render('photo', {
+        selectPhoto
+    })
+})
+
 // ROUTES POST
 app.post('/photos', async (req, res) => {
     await Photo.create(req.body)
