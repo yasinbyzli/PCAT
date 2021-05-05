@@ -1,11 +1,10 @@
 const express = require("express");
 const ejs = require("ejs");
-const path = require("path");
-const fs = require("fs");
 const mongoose = require("mongoose");
-const Photo = require("./models/Photo");
 const fileUpload = require("express-fileupload");
-const methodOverride = require("method-override");
+const methodOverride = require("method-override"); // delete ve update islemleri için
+const photoController = require('./controllers/photoControllers')
+const pageController = require('./controllers/pageController')
 
 const app = express();
 
@@ -33,87 +32,16 @@ app.use(
   })
 );
 
-// ROUTES GET
-app.get("/", async (req, res) => {
-  const photos = await Photo.find({}, {}, {sort : {'dateCreated' : -1}}, (err, data) => {
-    if (err) throw err;
-    return data;
-  });
-  res.render("index", {
-    photos,
-  });
-});
-
-app.get("/about", (req, res) => {
-  res.render("about");
-});
-
-app.get("/add", (req, res) => {
-  res.render("add");
-});
-
-app.get("/photos/:id", async (req, res) => {
-  let id = req.params.id;
-  let selectPhoto = await Photo.findById(id, (err, data) => {
-    if (err) throw err;
-    return data;
-  });
-  res.render("photo", {
-    selectPhoto,
-  });
-});
-
-app.get("/edit/:id", async (req, res) => {
-  let id = req.params.id;
-  let selectPhoto = await Photo.findById(id, (err, data) => {
-    if (err) throw err;
-    return data;
-  });
-  res.render("edit", {
-    selectPhoto,
-  });
-});
-
-// ROUTES POST
-app.post("/photos", async (req, res) => {
-  // post ekleme
-  // upload image
-  const uploadDir = "public/uploads";
-
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-  }
-  const uploadImage = req.files.image;
-  let uploadPath = __dirname + "/" + uploadDir + "/" + uploadImage.name;
-
-  uploadImage.mv(uploadPath, async () => {
-    await Photo.create({
-      ...req.body,
-      image: "/uploads/" + uploadImage.name,
-    });
-    res.redirect("/");
-  });
-});
-
-// guncelleme
-app.put("/photos/:id", async (req, res) => {
-  let id = req.params.id;
-  let selectPhoto = await Photo.findOne({ _id: id });
-  selectPhoto.title = req.body.title;
-  selectPhoto.description = req.body.description;
-  selectPhoto.save();
-  res.redirect(`/photos/${id}`);
-});
-
-// silme
-app.delete("/photos/:id", async (req, res) => {
-  let id = req.params.id;
-  let selectPhoto = await Photo.findOne({ _id: id });
-  let deletedImage = __dirname + "/public" + selectPhoto.image;
-  fs.unlinkSync(deletedImage);
-  await Photo.findByIdAndRemove({ _id: id });
-  res.redirect("/");
-});
+// ROUTES PHOTO
+app.get("/", photoController.getAllPhotos);
+app.get("/photos/:id", photoController.getPhoto);
+app.post("/photos", photoController.createPhoto);
+app.put("/photos/:id", photoController.updatePhoto);
+app.delete("/photos/:id", photoController.deletePhoto);
+// ROUTES PAGE
+app.get("/about", pageController.getAboutPage);
+app.get("/add", pageController.getAddPage);
+app.get("/photos/edit/:id", pageController.getEditPage);
 
 const port = 3000;
 
