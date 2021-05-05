@@ -1,19 +1,37 @@
 const express = require('express')
 const ejs = require('ejs')
 const path = require('path')
+const mongoose = require('mongoose')
+const Photo = require('./models/Photo')
+
 
 const app = express();
+
+// connect DB
+mongoose.connect("mongodb://localhost/pcat-test-db", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
 
 // TEMPLATE ENGİNE
 app.set('view engine', 'ejs')
 
 // MIDDLEWARE's
 app.use(express.static('public'))
+// fromdan gelen verileri okumamızı sağlayan iki middleware oluşturduk
+app.use(express.urlencoded({extended : true}))
+app.use(express.json())
 
-
-// ROUTES
-app.get('/', (req, res) => {
-    res.render('index')
+// ROUTES GET
+app.get('/', async (req, res) => {
+    const photos = await Photo.find({}, (err, data) => {
+        if (err) throw err
+        return data
+    })
+    res.render('index', {
+        photos
+    })
 })
 
 app.get('/about', (req, res) => {
@@ -22,6 +40,12 @@ app.get('/about', (req, res) => {
 
 app.get('/add', (req, res) => {
     res.render('add')
+})
+
+// ROUTES POST
+app.post('/photos', async (req, res) => {
+    await Photo.create(req.body)
+    res.redirect('/')
 })
 
 
