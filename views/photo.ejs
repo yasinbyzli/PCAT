@@ -42,7 +42,9 @@
 									</a>		
 								</div>	
 								<div class="text-center">
-									<button class="btn btn-danger p-0 tm-btn-animate tm-btn-download tm-icon-download"><span>Delete Photo</span></button>	
+									<a href="/photos/<%= selectPhoto._id %>?_method=DELETE" onclick="return confirm('ARE YOU SURE?')">
+										<button class="btn btn-danger p-0 tm-btn-animate tm-btn-download tm-icon-download"><span>Delete Photo</span></button>	
+									</a>
 								</div>								
 							</div>
 						</div>

@@ -5,7 +5,7 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const Photo = require("./models/Photo");
 const fileUpload = require("express-fileupload");
-const methodOverride = require('method-override');
+const methodOverride = require("method-override");
 
 const app = express();
 
@@ -13,6 +13,7 @@ const app = express();
 mongoose.connect("mongodb://localhost/pcat-test-db", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  useFindAndModify: false,
 });
 
 // TEMPLATE ENGİNE
@@ -26,11 +27,15 @@ app.use(express.json());
 // görsel yükleme
 app.use(fileUpload());
 // guncelleme - put
-app.use(methodOverride('_method'))
+app.use(
+  methodOverride("_method", {
+    methods: ["POST", "GET"],
+  })
+);
 
 // ROUTES GET
 app.get("/", async (req, res) => {
-  const photos = await Photo.find({}, (err, data) => {
+  const photos = await Photo.find({}, {}, {sort : {'dateCreated' : -1}}, (err, data) => {
     if (err) throw err;
     return data;
   });
@@ -58,29 +63,28 @@ app.get("/photos/:id", async (req, res) => {
   });
 });
 
-app.get('/edit/:id', async (req, res) => {
-    let id = req.params.id
-    let selectPhoto = await Photo.findById(id, (err, data) => {
-        if (err) throw err
-        return data
-    })
-    res.render('edit', {
-        selectPhoto
-    })
-})
-
+app.get("/edit/:id", async (req, res) => {
+  let id = req.params.id;
+  let selectPhoto = await Photo.findById(id, (err, data) => {
+    if (err) throw err;
+    return data;
+  });
+  res.render("edit", {
+    selectPhoto,
+  });
+});
 
 // ROUTES POST
 app.post("/photos", async (req, res) => {
-    // post ekleme
-    // upload image
+  // post ekleme
+  // upload image
   const uploadDir = "public/uploads";
 
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
   }
   const uploadImage = req.files.image;
-  let uploadPath = __dirname + "/" + uploadDir + '/' + uploadImage.name;
+  let uploadPath = __dirname + "/" + uploadDir + "/" + uploadImage.name;
 
   uploadImage.mv(uploadPath, async () => {
     await Photo.create({
@@ -92,16 +96,24 @@ app.post("/photos", async (req, res) => {
 });
 
 // guncelleme
-app.put('/edit/:id', async (req, res) => {
-    let id = req.params.id
-    let selectPhoto = await Photo.findOne({_id : id})
-    selectPhoto.title = req.body.title
-    selectPhoto.description = req.body.description
-    selectPhoto.save()
-    res.redirect(`/photos/${id}`)
-})
+app.put("/photos/:id", async (req, res) => {
+  let id = req.params.id;
+  let selectPhoto = await Photo.findOne({ _id: id });
+  selectPhoto.title = req.body.title;
+  selectPhoto.description = req.body.description;
+  selectPhoto.save();
+  res.redirect(`/photos/${id}`);
+});
 
-
+// silme
+app.delete("/photos/:id", async (req, res) => {
+  let id = req.params.id;
+  let selectPhoto = await Photo.findOne({ _id: id });
+  let deletedImage = __dirname + "/public" + selectPhoto.image;
+  fs.unlinkSync(deletedImage);
+  await Photo.findByIdAndRemove({ _id: id });
+  res.redirect("/");
+});
 
 const port = 3000;
 
