@@ -3,17 +3,23 @@ const ejs = require("ejs");
 const mongoose = require("mongoose");
 const fileUpload = require("express-fileupload");
 const methodOverride = require("method-override"); // delete ve update islemleri için
-const photoController = require('./controllers/photoControllers')
-const pageController = require('./controllers/pageController')
-
+const photoController = require("./controllers/photoControllers");
+const pageController = require("./controllers/pageController");
+require("dotenv").config();
 const app = express();
 
-// connect DB
-mongoose.connect("mongodb://localhost/pcat-test-db", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
-});
+try {
+  mongoose.connect(
+    "mongodb://localhost/pcat-test-db",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: false,
+    }
+  );
+} catch (err) {
+  console.log(err);
+}
 
 // TEMPLATE ENGİNE
 app.set("view engine", "ejs");
